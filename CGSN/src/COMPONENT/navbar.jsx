@@ -40,8 +40,8 @@ const Navbar = () => {
           <ul className="hidden md:flex space-x-8">
             <li><a href="#home" className="hover:text-gray-400">Home</a></li>
             <li><a href="#about" className="hover:text-gray-400">About</a></li>
-            <li><a href="#services" className="hover:text-gray-400">Services</a></li>
-            <li><a href="#contact" className="hover:text-gray-400">Contact</a></li>
+            <li><a href="/gpa" className="hover:text-gray-400">Services</a></li>
+            <li><Link to="/gpa" className="hover:text-gray-400">Contact</Link></li>
           </ul>
 
           <Link to="/Login"className="w-20 border-2 rounded-lg bg-gray-100 p-2">

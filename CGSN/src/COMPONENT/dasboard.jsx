@@ -1,42 +1,60 @@
 import { useState, useEffect } from "react";
-import { FaRegClock, FaPlus, FaPlay, FaStop, FaEllipsisV, FaChartBar, FaTasks, FaUsers, FaCogs, FaQuestionCircle, FaUserCircle } from "react-icons/fa";
-import { IoIosCheckmarkCircleOutline } from "react-icons/io";
-import { BiSolidDashboard } from "react-icons/bi";
-import { Link } from "react-router-dom";
+import { 
+  FaClock, 
+  FaEllipsisH, 
+  FaRegClock, 
+  FaUserCircle, 
+  FaPlus,
+  FaPlay,
+  FaStop,
+  FaChartBar,
+  FaTasks,
+  FaUsers,
+  FaCogs,
+  FaQuestionCircle
+} from "react-icons/fa";
+import { format } from 'date-fns';
 
-export default function Dashboard() {
+const TASK_STATUS = {
+  STARTED: { 
+    label: 'Started', 
+    color: 'bg-yellow-100 border-yellow-300'
+  },
+  IN_PROGRESS: { 
+    label: 'In Progress', 
+    color: 'bg-blue-100 border-blue-300'
+  },
+  COMPLETED: { 
+    label: 'Completed', 
+    color: 'bg-green-100 border-green-300'
+  }
+};
+
+const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedView, setSelectedView] = useState('List');
+  const [selectedItems, setSelectedItems] = useState([]);
   const [isTracking, setIsTracking] = useState(false);
   const [trackingStartTime, setTrackingStartTime] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [currentTask, setCurrentTask] = useState("");
+  const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [showAddTask, setShowAddTask] = useState(false);
-  const [tasks, setTasks] = useState([
-    {
-      date: "Today, 23 Sept 2023",
-      total: "03:56:32",
-      items: [
-        {
-          title: "Create Design System",
-          category: "Marketing",
-          assignee: "Samran Run",
-          timeStart: "13:13",
-          timeEnd: "14:39",
-          duration: "01:26:17",
-        },
-        {
-          title: "Finishing About Page",
-          category: "Digital Agency",
-          assignee: "Leslie Alexander",
-          timeStart: "13:43",
-          timeEnd: "15:51",
-          duration: "01:02:53",
-        },
-      ],
-    },
-  ]);
+  const [totalTimeToday, setTotalTimeToday] = useState(0);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    project: "",
+    assignee: "",
+    status: "STARTED"
+  });
 
-  // Update current time every second
+  const [tasks, setTasks] = useState({
+    "Today": {
+      date: format(new Date(), 'dd MMM yyyy'),
+      total: "00:00:00",
+      items: []
+    }
+  });
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -44,226 +62,375 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Update elapsed time when tracking
   useEffect(() => {
     let timer;
     if (isTracking) {
       timer = setInterval(() => {
         const now = new Date();
-        const elapsed = Math.floor((now - trackingStartTime) / 1000);
-        setElapsedTime(elapsed);
+        const diff = now - trackingStartTime;
+        const formattedTime = new Date(diff).toISOString().substr(11, 8);
+        setElapsedTime(formattedTime);
       }, 1000);
     }
     return () => clearInterval(timer);
   }, [isTracking, trackingStartTime]);
 
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const formatElapsedTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+  const formatTimeFromSeconds = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const handleStartStop = () => {
-    if (!isTracking) {
-      setTrackingStartTime(new Date());
+  const calculateDuration = (startTime, endTime) => {
+    const start = new Date(`2000/01/01 ${startTime}`);
+    const end = new Date(`2000/01/01 ${endTime}`);
+    const diff = (end - start) / 1000;
+    return formatTimeFromSeconds(diff);
+  };
+
+  const handleStartTimer = () => {
+    if (!isTracking && currentTask) {
+      const now = new Date();
+      setTrackingStartTime(now);
       setIsTracking(true);
-    } else {
-      const endTime = new Date();
-      const newTask = {
-        title: currentTask || "Untitled Task",
-        category: "General",
+
+      const newTaskItem = {
+        id: Date.now(),
+        title: currentTask,
+        project: "Default Project",
         assignee: "Current User",
-        timeStart: formatTime(trackingStartTime),
-        timeEnd: formatTime(endTime),
-        duration: formatElapsedTime(elapsedTime),
+        timeStart: format(now, 'HH:mm'),
+        timeEnd: "",
+        duration: "00:00:00",
+        status: "STARTED",
+        selected: false
       };
 
-      const today = formatDate(currentTime);
-      const updatedTasks = [...tasks];
-      const todaySection = updatedTasks.find(section => section.date === today);
+      setTasks(prev => ({
+        ...prev,
+        "Today": {
+          ...prev["Today"],
+          items: [newTaskItem, ...prev["Today"].items]
+        }
+      }));
+    }
+  };
 
-      if (todaySection) {
-        todaySection.items.push(newTask);
-      } else {
-        updatedTasks.unshift({
-          date: today,
-          total: "00:00:00",
-          items: [newTask],
+  const handleStopTimer = () => {
+    if (isTracking) {
+      const now = new Date();
+      const endTime = format(now, 'HH:mm');
+      const duration = calculateDuration(format(trackingStartTime, 'HH:mm'), endTime);
+
+      setTasks(prev => {
+        const updatedItems = prev["Today"].items.map(item => {
+          if (item.title === currentTask && !item.timeEnd) {
+            const durationInSeconds = (now - trackingStartTime) / 1000;
+            setTotalTimeToday(prev => prev + durationInSeconds);
+            return {
+              ...item,
+              timeEnd: endTime,
+              duration,
+              status: "IN_PROGRESS"
+            };
+          }
+          return item;
         });
-      }
 
-      setTasks(updatedTasks);
+        return {
+          ...prev,
+          "Today": {
+            ...prev["Today"],
+            items: updatedItems,
+            total: formatTimeFromSeconds(totalTimeToday + (now - trackingStartTime) / 1000)
+          }
+        };
+      });
+
       setIsTracking(false);
-      setElapsedTime(0);
+      setTrackingStartTime(null);
+      setElapsedTime("00:00:00");
       setCurrentTask("");
     }
   };
 
   const handleAddTask = () => {
-    const newTask = {
-      title: currentTask,
-      category: "General",
-      assignee: "Current User",
-      timeStart: formatTime(currentTime),
-      timeEnd: "-",
+    const now = new Date();
+    const newTaskItem = {
+      id: Date.now(),
+      ...newTask,
+      timeStart: format(now, 'HH:mm'),
+      timeEnd: "",
       duration: "00:00:00",
+      selected: false
     };
 
-    const today = formatDate(currentTime);
-    const updatedTasks = [...tasks];
-    const todaySection = updatedTasks.find(section => section.date === today);
+    setTasks(prev => ({
+      ...prev,
+      "Today": {
+        ...prev["Today"],
+        items: [newTaskItem, ...prev["Today"].items]
+      }
+    }));
 
-    if (todaySection) {
-      todaySection.items.push(newTask);
-    } else {
-      updatedTasks.unshift({
-        date: today,
-        total: "00:00:00",
-        items: [newTask],
-      });
-    }
-
-    setTasks(updatedTasks);
-    setCurrentTask("");
     setShowAddTask(false);
+    setNewTask({
+      title: "",
+      project: "",
+      assignee: "",
+      status: "STARTED"
+    });
+  };
+
+  const handleStatusChange = (taskId, newStatus) => {
+    setTasks(prev => ({
+      ...prev,
+      "Today": {
+        ...prev["Today"],
+        items: prev["Today"].items.map(item =>
+          item.id === taskId ? { ...item, status: newStatus } : item
+        )
+      }
+    }));
+  };
+
+  const handleItemSelect = (dayKey, itemId) => {
+    const updatedTasks = { ...tasks };
+    const item = updatedTasks[dayKey].items.find(i => i.id === itemId);
+    if (item) {
+      item.selected = !item.selected;
+      setTasks(updatedTasks);
+      setSelectedItems(prev =>
+        item.selected ? [...prev, itemId] : prev.filter(id => id !== itemId)
+      );
+    }
+  };
+
+  const handleContinueTask = (task) => {
+    setCurrentTask(task.title);
+    handleStartTimer();
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-white">
       {/* Sidebar */}
-      <aside className="w-64 bg-white p-6 border-r">
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <FaUserCircle className="text-5xl text-gray-600" />
+      <aside className="w-64 border-r border-gray-200 p-4">
+        <div className="flex items-center gap-3 mb-8">
           <div className="flex items-center gap-2">
-            <IoIosCheckmarkCircleOutline className="text-3xl text-blue-500" />
-            <h1 className="text-xl font-bold">Task Manager</h1>
+            <FaUserCircle className="text-2xl text-gray-400" />
+            <div>
+              <h3 className="font-medium">Time Tracker</h3>
+              <p className="text-sm text-gray-500">Dashboard</p>
+            </div>
           </div>
         </div>
-        <nav>
-          <ul className="space-y-4">
-            <li><Link to="/" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><BiSolidDashboard /> Dashboard</Link></li>
-            <li><Link to="/" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaRegClock /> Timer</Link></li>
-            <li><Link to="/Reports" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaChartBar /> Reports</Link></li>
-            <li><Link to="/projects" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaTasks /> Projects</Link></li>
-            <li><Link to="/team" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaUsers /> Team</Link></li>
-            <li><Link to="/settings" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaCogs /> Settings</Link></li>
-            <li><Link to="/help" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaQuestionCircle /> Help Center</Link></li>
-          </ul>
+
+        <nav className="space-y-1">
+          <div className="text-xs font-medium text-gray-500 mb-2">TIMER</div>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-blue-600 bg-blue-50">
+            <FaRegClock /> Timer
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-gray-700 hover:bg-gray-100">
+            <FaChartBar /> Reports
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-gray-700 hover:bg-gray-100">
+            <FaTasks /> Projects
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-gray-700 hover:bg-gray-100">
+            <FaUsers /> Team
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-gray-700 hover:bg-gray-100">
+            <FaCogs /> Settings
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded flex items-center gap-2 text-gray-700 hover:bg-gray-100">
+            <FaQuestionCircle /> Help
+          </button>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex-1 mr-4">
+      <main className="flex-1 p-6">
+        <div className="max-w-5xl mx-auto">
+          {/* Timer Controls */}
+          <div className="flex justify-between items-center mb-6">
             <input
               type="text"
               value={currentTask}
               onChange={(e) => setCurrentTask(e.target.value)}
               placeholder="What are you working on?"
-              className="border px-4 py-2 rounded-md w-full"
+              className="flex-1 mr-4 px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:border-blue-500"
             />
-          </div>
-          <div className="flex gap-3 items-center">
-            <div className="text-lg font-semibold">
-              {formatTime(currentTime)}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAddTask(true)}
+                className="px-3 py-2 border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                <FaPlus className="inline mr-1" /> Task
+              </button>
+              <div className="flex items-center gap-2 bg-white px-3 py-2 border border-gray-200 rounded-md">
+                <FaClock className="text-gray-400" />
+                <span className="text-gray-700">{elapsedTime}</span>
+              </div>
+              <button
+                onClick={isTracking ? handleStopTimer : handleStartTimer}
+                className={`px-4 py-2 ${isTracking ? 'bg-red-600' : 'bg-blue-600'} text-white rounded-md hover:opacity-90`}
+                disabled={!currentTask && !isTracking}
+              >
+                {isTracking ? <><FaStop className="inline mr-1" /> Stop</> : <><FaPlay className="inline mr-1" /> Start</>}
+              </button>
             </div>
-            <button 
-              onClick={() => setShowAddTask(true)}
-              className="flex items-center bg-white px-4 py-2 border rounded-md shadow-sm"
-            >
-              <FaPlus className="mr-2" /> Task
-            </button>
-            <button 
-              onClick={handleStartStop}
-              className={`${isTracking ? 'bg-red-600' : 'bg-blue-600'} text-white px-4 py-2 rounded-md flex items-center gap-2`}
-            >
-              {isTracking ? <><FaStop /> Stop</> : <><FaPlay /> Start</>}
-            </button>
           </div>
+
+          {/* Add Task Modal */}
+          {showAddTask && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg w-96">
+                <h2 className="text-xl font-bold mb-4">Add New Task</h2>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={newTask.title}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Task name"
+                    className="w-full px-4 py-2 border rounded-md"
+                  />
+                  <input
+                    type="text"
+                    value={newTask.project}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, project: e.target.value }))}
+                    placeholder="Project"
+                    className="w-full px-4 py-2 border rounded-md"
+                  />
+                  <input
+                    type="text"
+                    value={newTask.assignee}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, assignee: e.target.value }))}
+                    placeholder="Assignee"
+                    className="w-full px-4 py-2 border rounded-md"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowAddTask(false)}
+                      className="px-4 py-2 border rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddTask}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                    >
+                      Add Task
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* View Toggle */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedView('List')}
+                className={`px-3 py-1 rounded ${selectedView === 'List' ? 'bg-gray-100' : ''}`}
+              >
+                List
+              </button>
+              <button
+                onClick={() => setSelectedView('Week')}
+                className={`px-3 py-1 rounded ${selectedView === 'Week' ? 'bg-gray-100' : ''}`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setSelectedView('Day')}
+                className={`px-3 py-1 rounded ${selectedView === 'Day' ? 'bg-gray-100' : ''}`}
+              >
+                Day
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Today's Total:</span>
+              <span className="font-medium">{tasks["Today"].total}</span>
+            </div>
+          </div>
+
+          {/* Task List */}
+          {Object.entries(tasks).map(([day, { date, total, items }]) => (
+            <div key={day} className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="font-medium">{day}, {date}</h2>
+                  {selectedItems.length > 0 && (
+                    <div className="flex gap-2">
+                      <button className="text-blue-600 text-sm">Bulk Edit</button>
+                      <button className="text-red-600 text-sm">Delete</button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Total:</span>
+                  <span className="font-medium">{total}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-4 border rounded-lg flex items-center justify-between ${TASK_STATUS[item.status].color}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="checkbox"
+                        checked={item.selected}
+                        onChange={() => handleItemSelect(day, item.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                      />
+                      <div>
+                        <h3 className="font-medium">{item.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {item.project} • {item.assignee}
+                        </p>
+                      </div>
+                      <span className="text-sm px-2 py-1 rounded-full bg-white">
+                        {TASK_STATUS[item.status].label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-gray-500">
+                        {item.timeStart} - {item.timeEnd || 'Running'} ({item.duration})
+                      </span>
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        className="text-sm border rounded px-2 py-1"
+                      >
+                        {Object.keys(TASK_STATUS).map(status => (
+                          <option key={status} value={status}>
+                            {TASK_STATUS[status].label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleContinueTask(item)}
+                        className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                        disabled={isTracking}
+                      >
+                        Continue
+                      </button>
+                      <FaEllipsisH className="text-gray-400 cursor-pointer" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* Timer Display */}
-        {isTracking && (
-          <div className="mb-6 bg-blue-50 p-4 rounded-md">
-            <div className="text-2xl font-bold text-center">
-              {formatElapsedTime(elapsedTime)}
-            </div>
-          </div>
-        )}
-
-        {/* Add Task Modal */}
-        {showAddTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h2 className="text-xl font-bold mb-4">Add New Task</h2>
-              <input
-                type="text"
-                value={currentTask}
-                onChange={(e) => setCurrentTask(e.target.value)}
-                placeholder="Task name"
-                className="border px-4 py-2 rounded-md w-full mb-4"
-              />
-              <div className="flex justify-end gap-2">
-                <button 
-                  onClick={() => setShowAddTask(false)}
-                  className="px-4 py-2 border rounded-md"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleAddTask}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md"
-                >
-                  Add Task
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Task List */}
-        {tasks.map((section, i) => (
-          <div key={i} className="mb-6 bg-white p-6 rounded-md shadow">
-            <div className="flex justify-between mb-4">
-              <h2 className="font-semibold text-lg">{section.date}</h2>
-              <span className="text-gray-500">Total: {section.total}</span>
-            </div>
-            {section.items.map((task, j) => (
-              <div key={j} className="flex justify-between items-center p-4 border rounded-md mb-3">
-                <div>
-                  <h3 className="font-medium">{task.title}</h3>
-                  <p className="text-gray-500 text-sm">{task.category} - {task.assignee}</p>
-                </div>
-                <div className="text-gray-500 text-sm">
-                  {task.timeStart} - {task.timeEnd} ({task.duration})
-                </div>
-                <button className="bg-gray-200 px-4 py-2 rounded-md">Continue</button>
-                <FaEllipsisV className="text-gray-500 cursor-pointer" />
-              </div>
-            ))}
-          </div>
-        ))}
       </main>
     </div>
   );
-}
+};
+
+export default Dashboard;

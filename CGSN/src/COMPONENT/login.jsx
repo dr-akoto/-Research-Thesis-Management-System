@@ -1,62 +1,116 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { FaRegClock, FaTasks, FaUsers, FaChartBar, FaCogs, FaQuestionCircle, FaUserCircle } from 'react-icons/fa';
+import  { useState } from 'react';
+import { Mail, Lock, User, ArrowLeft, Github } from 'lucide-react';
 
-const Sidebar = () => (
-  <aside className="w-64 bg-gray-100 p-6 min-h-screen flex flex-col">
-    <div className="flex items-center gap-3">
-      <FaUserCircle className="text-3xl text-gray-600" />
-      <div>
-        <h2 className="text-lg font-semibold">Leonard Small</h2>
-        <p className="text-sm text-gray-500">leonardsml@gmail.com</p>
+const Login = () => {
+  const [isLogin, setIsLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <div className="flex h-screen bg-gradient-to-br from-indigo-500 to-purple-700">
+      {/* Left Panel - Hero Section */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-12 text-white">
+        <div className="space-y-6">
+          <h1 className="text-5xl font-bold">Welcome to Horizon</h1>
+          <p className="text-xl opacity-80">Where creativity meets technology. Join our community of innovators and creators.</p>
+          <div className="flex space-x-3">
+            <div className="w-12 h-1 bg-white opacity-50 rounded-full" />
+            <div className="w-12 h-1 bg-white rounded-full" />
+            <div className="w-12 h-1 bg-white opacity-50 rounded-full" />
+          </div>
+        </div>
       </div>
-    </div>
-    <nav className="mt-6 flex-1">
-      <ul>
-        <li><Link to="/" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaRegClock /> Timer</Link></li>
-        <li><Link to="/reports" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaChartBar /> Reports</Link></li>
-        <li><Link to="/projects" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaTasks /> Projects</Link></li>
-        <li><Link to="/team" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaUsers /> Team</Link></li>
-        <li><Link to="/settings" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaCogs /> Settings</Link></li>
-        <li><Link to="/help" className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded"><FaQuestionCircle /> Help Center</Link></li>
-      </ul>
-    </nav>
-  </aside>
-);
 
-const Dashboard = () => (
-  <main className="flex-1 p-6 bg-white">
-    <div className="flex justify-between items-center gap-4">
-      <input type="text" placeholder="What are you working on?" className="p-3 border rounded w-2/3" />
-      <button className="bg-blue-600 text-white px-6 py-2 rounded">+ Task</button>
-      <button className="bg-green-600 text-white px-6 py-2 rounded">Start</button>
-    </div>
-    <div className="mt-6">
-      <h2 className="text-xl font-semibold">Today, 23 Sept 2023</h2>
-      <div className="mt-4 bg-gray-50 p-4 rounded shadow-md">
-        <div className="flex justify-between items-center">
-          <p className="text-lg font-medium">Create Design System</p>
-          <button className="text-sm bg-blue-500 text-white px-4 py-1 rounded">Continue</button>
+      {/* Right Panel - Auth Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center">
+        <div className="w-full max-w-md p-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-xl">
+          <div className="mb-8 text-white">
+            <h2 className="text-3xl font-bold mb-2">
+              {isLogin ? 'Welcome Back' : 'Create Account'}
+            </h2>
+            <p className="opacity-70">
+              {isLogin ? 'Sign in to continue your journey' : 'Begin your creative journey today'}
+            </p>
+          </div>
+
+          <form className="space-y-4">
+            {!isLogin && (
+              <div className="flex space-x-4">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    className="w-full px-4 py-3 bg-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+                  />
+                  <User className="absolute right-3 top-3 text-white/50 h-5 w-5" />
+                </div>
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    className="w-full px-4 py-3 bg-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+                  />
+                  <User className="absolute right-3 top-3 text-white/50 h-5 w-5" />
+                </div>
+              </div>
+            )}
+
+            <div className="relative">
+              <input
+                type="email"
+                placeholder="Email Address"
+                className="w-full px-4 py-3 bg-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+              />
+              <Mail className="absolute right-3 top-3 text-white/50 h-5 w-5" />
+            </div>
+
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                className="w-full px-4 py-3 bg-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+              />
+              <Lock className="absolute right-3 top-3 text-white/50 h-5 w-5" />
+            </div>
+
+            <button className="w-full py-3 bg-white rounded-xl text-purple-700 font-semibold hover:bg-white/90 transition-colors">
+              {isLogin ? 'Sign In' : 'Create Account'}
+            </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/20"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-transparent text-white/50">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <button className="flex-1 py-3 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors flex items-center justify-center space-x-2">
+                <Github className="h-5 w-5" />
+                <span>Github</span>
+              </button>
+              <button className="flex-1 py-3 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors flex items-center justify-center space-x-2">
+                <Mail className="h-5 w-5" />
+                <span>Google</span>
+              </button>
+            </div>
+
+            <p className="text-center text-white/50 mt-6">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-white hover:underline"
+              >
+                {isLogin ? 'Sign up' : 'Sign in'}
+              </button>
+            </p>
+          </form>
         </div>
       </div>
     </div>
-  </main>
-);
+  );
+};
 
-const App = () => (
-  <Router>
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/reports" element={<div>Reports Page</div>} />
-        <Route path="/projects" element={<div>Projects Page</div>} />
-        <Route path="/team" element={<div>Team Page</div>} />
-        <Route path="/settings" element={<div>Settings Page</div>} />
-        <Route path="/help" element={<div>Help Center</div>} />
-      </Routes>
-    </div>
-  </Router>
-);
-
-export default App;
+export default Login;
