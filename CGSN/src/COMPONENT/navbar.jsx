@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,9 +44,9 @@ const Navbar = () => {
             <li><a href="#contact" className="hover:text-gray-400">Contact</a></li>
           </ul>
 
-          <button className="w-20 border-2 rounded-lg bg-gray-100 p-2">
+          <Link to="/Login"className="w-20 border-2 rounded-lg bg-gray-100 p-2">
             Sign up
-          </button>
+          </Link>
         </div>
       </div>
 

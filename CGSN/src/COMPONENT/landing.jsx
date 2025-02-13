@@ -7,11 +7,11 @@ const Landing = () => {
       {/* Navbar */}
       <Navbar />
        
-      {/* Hero Section */}s
+      {/* Hero Section */}
       <header className="bg-gray-200 text-black py-24 text-center">
         <h1 className="text-6xl font-extrabold">Manage Your Research & Thesis Seamlessly</h1>
         <p className="mt-5 text-xl max-w-3xl mx-auto">Track research progress, collaborate with peers, and integrate your GPA effortlessly.</p>
-        <Link to="/login" className="mt-8 inline-block bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-200 transition shadow-lg">Get Started</Link>
+        <Link to="/Dashboard" className="mt-8 inline-block bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-200 transition shadow-lg">Get Started</Link>
       </header>
       
       {/* Features Section */}
